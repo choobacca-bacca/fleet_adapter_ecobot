@@ -381,7 +381,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
             f"[DOCK] Start docking to charger with dock param: {dock_name}")
 
         # NOTE: Docking called when robot is heading back to charger
-        self.target_waypoint.graph_index = self.charger_waypoint.index
+        self.target_waypoint.graph_index = self.graph.find_waypoint(dock_name).index
         self.on_waypoint = None
         self.on_lane = None
 
