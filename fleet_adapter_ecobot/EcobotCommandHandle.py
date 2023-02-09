@@ -407,13 +407,12 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                 self.remaining_waypoints = self.remaining_waypoints[1:]
                 self.state = EcobotState.MOVING
 
-                with self._lock:
-                    self.on_waypoint = waypoint_idx
-                    self.docking_finished_callback()
-                    self.node.get_logger().info("Docking completed")
-                    self.node.get_logger().info("Docking on Navigation completed")
-                self.api.set_cleaning_mode(
-                    self.config['inactive_cleaning_config'])
+                # nav_completed = self.api.navigation_completed()
+                # while (nav_completed == False):
+                #     nav_completed = self.api.navigation_completed()
+                #     self.node.get_logger().info("Navigating to dock position")
+                #     time.sleep(1.0)
+
                 # with self._lock:
                 #     if self.on_waypoint is not None: # robot starts at a graph waypoint
                 #         self.last_known_waypoint_index = self.on_waypoint
@@ -434,6 +433,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                 nav()
                 self.node.get_logger().info(
                     f"[DOCK] Not docking to: {dock_name}, but regular navigation")
+                charger_waypoint = False
 
             while charger_waypoint:
                 self.node.get_logger().info(
@@ -461,7 +461,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                 time.sleep(1.0)
             # Here we assume that the robot has successfully reached waypoint with name same as dock_name
             with self._lock:
-                self.on_waypoint = self.charger_waypoint.index
+                self.on_waypoint = waypoint_idx
                 self.docking_finished_callback()
                 self.node.get_logger().info("Docking completed")
             self.api.set_cleaning_mode(self.config['inactive_cleaning_config'])
