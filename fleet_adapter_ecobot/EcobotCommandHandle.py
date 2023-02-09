@@ -381,7 +381,8 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
             f"[DOCK] Start docking to charger with dock param: {dock_name}")
 
         # NOTE: Docking called when robot is heading back to charger
-        self.target_waypoint.graph_index = self.graph.find_waypoint(dock_name).index
+        waypoint_idx = self.graph.find_waypoint(dock_name).index
+        self.target_waypoint.graph_index = waypoint_idx
         self.on_waypoint = None
         self.on_lane = None
 
@@ -407,9 +408,10 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                 self.state = EcobotState.MOVING
 
                 with self._lock:
-                    self.on_waypoint = self.charger_waypoint.index
+                    self.on_waypoint = waypoint_idx
                     self.docking_finished_callback()
                     self.node.get_logger().info("Docking completed")
+                    self.node.get_logger().info("Docking on Navigation completed")
                 self.api.set_cleaning_mode(
                     self.config['inactive_cleaning_config'])
                 # with self._lock:
