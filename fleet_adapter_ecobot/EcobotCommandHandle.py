@@ -335,6 +335,14 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
         self._follow_path_thread.start()
 
     ##############################################################################
+
+    def get_named_waypoint_location(self, waypoint_name):
+        try:
+            waypoint_idx = self.graph.find_waypoint(waypoint_name).index
+            return self.graph.get_waypoint(waypoint_idx).location.tolist()
+        except:
+            return None
+
     # override function
     def dock(
         self,
@@ -352,15 +360,52 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
         self.node.get_logger().info(f"[DOCK] Start docking to charger with dock param: {dock_name}")
 
         # NOTE: Docking called when robot is heading back to charger
-        self.target_waypoint.graph_index = self.charger_waypoint.index
+        waypoint_idx = self.graph.find_waypoint(dock_name).index
+        self.target_waypoint.graph_index = waypoint_idx
         self.on_waypoint = None
         self.on_lane = None
+
+        def nav():
+            self.node.get_logger().info(
+                f"Requesting robot {self.name} to navigate to {dock_name}"
+            )
+
+            dock_loc = self.get_named_waypoint_location(dock_name)
+            [px, py, orient] = self.transforms[self.robot_map_name][
+                "tf"
+            ].to_robot_map(dock_loc + [0])
+            waypoint = [px, py, orient]
+            self.node.get_logger().info(
+                f"Robot {self.name} trying to navigate to {dock_loc}"
+                "grid coordinates. Retrying...")
+
+            response = self.api.navigate(
+                [px, py, orient], self.robot_map_name
+            )
+            if response:
+                self.remaining_waypoints = self.remaining_waypoints[1:]
+                self.state = EcobotState.MOVING
+            else:
+                self.node.get_logger().info(
+                    f"Robot {self.name} failed to navigate to"
+                    "grid coordinates. Retrying...")
+                time.sleep(1.0)
+
+
         def _dock():
             # TODO, clean up implementation of dock
             # Check if the dock waypoint is a charger or cleaning zone and call the
             # appropriate API. Charger docks should have dock_name as "charger_<robot_name>"
             # todo [YV]: Map dock names to API callbacks instead of checking substrings
-            while True:
+            charger_waypoint = True
+            if dock_name[:7] != "charger":
+                # self.api.navigate_to_waypoint(dock_name, self.robot_map_name)
+                nav()
+                self.node.get_logger().info(
+                    f"[DOCK] Not docking to: {dock_name}, but regular navigation")
+                charger_waypoint = False
+
+            while charger_waypoint:
                 self.node.get_logger().info(f"Requesting robot {self.name} to charge at {dock_name}")
                 # The Ecobot75 requires a TF path to dock to charging location. This path is
                 # named the same as the dock name (charger_ecobot75_x)
@@ -382,7 +427,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                 time.sleep(1.0)
             # Here we assume that the robot has successfully reached waypoint with name same as dock_name
             with self._lock:
-                self.on_waypoint = self.charger_waypoint.index
+                self.on_waypoint = waypoint_idx
                 self.docking_finished_callback()
                 self.node.get_logger().info("Docking completed")
             self.api.set_cleaning_mode(self.config['inactive_cleaning_config'])
