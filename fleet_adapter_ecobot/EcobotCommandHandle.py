@@ -365,7 +365,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
         self.on_waypoint = None
         self.on_lane = None
 
-        def nav():
+        def _nav():
             self.node.get_logger().info(
                 f"Requesting robot {self.name} to navigate to {dock_name}"
             )
@@ -398,9 +398,10 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
             # appropriate API. Charger docks should have dock_name as "charger_<robot_name>"
             # todo [YV]: Map dock names to API callbacks instead of checking substrings
             charger_waypoint = True
+
+            # This checks if the docking point is a charger, if it is not, normal navigation is triggered.
             if dock_name[:7] != "charger":
-                # self.api.navigate_to_waypoint(dock_name, self.robot_map_name)
-                nav()
+                _nav()
                 self.node.get_logger().info(
                     f"[DOCK] Not docking to: {dock_name}, but regular navigation")
                 charger_waypoint = False
