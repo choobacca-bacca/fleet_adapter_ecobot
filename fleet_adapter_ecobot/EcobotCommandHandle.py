@@ -391,6 +391,16 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     "grid coordinates. Retrying...")
                 time.sleep(1.0)
 
+        def _exit_lift():
+            # To check if map switching is needed
+            target_map=dock_name.split("_")[0]
+            if target_map!=self.robot_map_name:
+                self.node.get_logger().info(
+                        f"Requesting robot {self.name} to enter/exit lift"
+                    )
+                self.api.load_map(("TRL_"+ target_map))
+                self.api.localize((target_map + "_lift_inside"), ("TRL_"+ target_map), True)
+
 
         def _dock():
             # TODO, clean up implementation of dock
@@ -399,8 +409,9 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
             # todo [YV]: Map dock names to API callbacks instead of checking substrings
             charger_waypoint = True
 
-            # This checks if the docking point is a charger, if it is not, normal navigation is triggered.
+            # This checks if the docking point is a charger, if it is not, normal navigation is triggered, and if need be, a map change.
             if dock_name[:7] != "charger":
+                _exit_lift()
                 _nav()
                 self.node.get_logger().info(
                     f"[DOCK] Not docking to: {dock_name}, but regular navigation")
