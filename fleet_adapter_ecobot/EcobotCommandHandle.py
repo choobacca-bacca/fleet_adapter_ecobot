@@ -379,29 +379,30 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                 f"Robot {self.name} trying to navigate to {dock_loc}"
                 "grid coordinates. Retrying...")
 
-            response = self.api.navigate(
-                [px, py, orient], self.robot_map_name
-            )
-            if response:
-                self.remaining_waypoints = self.remaining_waypoints[1:]
-                self.state = EcobotState.MOVING
+            while True:
+                response = self.api.navigate(
+                    [px, py, orient], self.robot_map_name
+                )
+                if response:
+                    self.remaining_waypoints = self.remaining_waypoints[1:]
+                    self.state = EcobotState.MOVING
 
-                nav_completed = self.api.navigation_completed()
-                while (nav_completed == False):
                     nav_completed = self.api.navigation_completed()
-                    self.node.get_logger().info("Navigating to dock position")
-                    time.sleep(1.0)
+                    while (nav_completed == False):
+                        nav_completed = self.api.navigation_completed()
+                        self.node.get_logger().info("Navigating to dock position")
+                        time.sleep(1.0)
 
-                with self._lock:
-                    self.on_waypoint = waypoint_idx
-                    self.docking_finished_callback()
-                    self.node.get_logger().info("Docking completed")
-                self.api.set_cleaning_mode(self.config['inactive_cleaning_config'])
-            else:
-                self.node.get_logger().info(
-                    f"Robot {self.name} failed to navigate to"
-                    "grid coordinates. Retrying...")
-                time.sleep(1.0)
+                    with self._lock:
+                        self.on_waypoint = waypoint_idx
+                        self.docking_finished_callback()
+                        self.node.get_logger().info("Docking completed")
+                    self.api.set_cleaning_mode(self.config['inactive_cleaning_config'])
+                    break
+                else:
+                    self.node.get_logger().info(
+                        f"Robot {self.name} failed to navigate to"
+                        "grid coordinates. Retrying...")
 
         def _exit_lift():
             # To check if map switching is needed
