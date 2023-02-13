@@ -385,6 +385,12 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
             if response:
                 self.remaining_waypoints = self.remaining_waypoints[1:]
                 self.state = EcobotState.MOVING
+
+                nav_completed = self.api.navigation_completed()
+                while (nav_completed == False):
+                    nav_completed = self.api.navigation_completed()
+                    self.node.get_logger().info("Navigating to dock position")
+                    time.sleep(1.0)
             else:
                 self.node.get_logger().info(
                     f"Robot {self.name} failed to navigate to"
@@ -400,11 +406,18 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     )
                 self.api.load_map(target_map)
                 self.api.localize((target_map + "_lift_inside"), (target_map), False)
-                while self.api.is_localize() == None:
+                time.sleep(5.0)
+                localized = self.api.is_localize()
+                self.node.get_logger().info(
+                        f"Waiting for robot {self.name} to localize at {self.robot_map_name}, current value is {localized}"
+                    )
+                while localized == None:
                     time.sleep(1.0)
                     self.node.get_logger().info(
-                        f"Waiting for robot {self.name} to localize at {self.robot_map_name}"
-                    )              
+                        f"Waiting for robot {self.name} to localize at {self.robot_map_name}, current value is {localized}"
+                    )
+                    localized = self.api.is_localize()
+                time.sleep(1.0)         
 
 
         def _dock():
