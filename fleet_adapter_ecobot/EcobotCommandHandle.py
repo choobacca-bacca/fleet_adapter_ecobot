@@ -383,13 +383,17 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                 response = self.api.navigate(
                     [px, py, orient], self.robot_map_name
                 )
+                retry = False
                 if response:
                     self.remaining_waypoints = self.remaining_waypoints[1:]
                     self.state = EcobotState.MOVING
 
                     nav_completed = False
-                    time.sleep(10.0)
-                    while (nav_completed == False or self.state == EcobotState.MOVING):
+                    if (retry):
+                        time.sleep(30.0)
+                    else:
+                        time.sleep(1.0)
+                    while (nav_completed == False):
                         nav_completed = self.api.navigation_completed()
                         self.node.get_logger().info("Navigating to dock position")
                         time.sleep(1.0)
@@ -400,6 +404,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     self.node.get_logger().info(
                         f"Robot {self.name} failed to navigate to"
                         "grid coordinates. Retrying...")
+                    retry = True
 
         def _exit_lift():
             # To check if map switching is needed
