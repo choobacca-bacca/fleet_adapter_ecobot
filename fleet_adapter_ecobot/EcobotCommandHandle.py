@@ -399,7 +399,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                         f"Requesting robot {self.name} to enter/exit lift and change maps from {self.robot_map_name} to {target_map}"
                     )
                 self.api.load_map(target_map)
-                self.api.localize((target_map + "_lift_inside"), ("TRL_"+ target_map), True)
+                self.api.localize((target_map + "_lift_inside"), (target_map), True)
 
 
         def _dock():
