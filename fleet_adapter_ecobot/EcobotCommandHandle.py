@@ -389,7 +389,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
 
                     nav_completed = False
                     time.sleep(10.0)
-                    while (nav_completed == False):
+                    while (nav_completed == False and self.state == EcobotState.MOVING):
                         nav_completed = self.api.navigation_completed()
                         self.node.get_logger().info("Navigating to dock position")
                         time.sleep(1.0)
