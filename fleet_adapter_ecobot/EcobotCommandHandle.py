@@ -391,6 +391,12 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     nav_completed = self.api.navigation_completed()
                     self.node.get_logger().info("Navigating to dock position")
                     time.sleep(1.0)
+
+                with self._lock:
+                    self.on_waypoint = waypoint_idx
+                    self.docking_finished_callback()
+                    self.node.get_logger().info("Docking completed")
+                self.api.set_cleaning_mode(self.config['inactive_cleaning_config'])
             else:
                 self.node.get_logger().info(
                     f"Robot {self.name} failed to navigate to"
@@ -458,6 +464,11 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                 # dock into the charger
                 else:
                     if self.api.navigate_to_waypoint(dock_name, self.robot_map_name):
+                        with self._lock:
+                            self.on_waypoint = waypoint_idx
+                            self.docking_finished_callback()
+                            self.node.get_logger().info("Docking completed")
+                        self.api.set_cleaning_mode(self.config['inactive_cleaning_config'])
                         break
                 time.sleep(1.0)
             while (not self.api.task_completed()):
@@ -467,11 +478,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     return
                 time.sleep(1.0)
             # Here we assume that the robot has successfully reached waypoint with name same as dock_name
-            with self._lock:
-                self.on_waypoint = waypoint_idx
-                self.docking_finished_callback()
-                self.node.get_logger().info("Docking completed")
-            self.api.set_cleaning_mode(self.config['inactive_cleaning_config'])
+            
 
         self._dock_thread = threading.Thread(target=_dock)
         self._dock_thread.start()
