@@ -411,13 +411,24 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                 self.node.get_logger().info(
                         f"Waiting for robot {self.name} to localize at {self.robot_map_name}, current value is {localized}"
                     )
-                while localized == None:
+                while localized == None or localized == False:
                     time.sleep(1.0)
                     self.node.get_logger().info(
                         f"Waiting for robot {self.name} to localize at {self.robot_map_name}, current value is {localized}"
                     )
+                    if localized == False:
+                        self.node.get_logger().info(
+                        f"Localizing Robot again with rotation"
+                    )
+                        self.api.localize((target_map + "_lift_inside"), (target_map), True)
+                        time.sleep(25.0)
                     localized = self.api.is_localize()
-                time.sleep(1.0)         
+                    
+                time.sleep(1.0)   
+            else:
+                self.node.get_logger().info(
+                    f"Map switching not needed"
+                )     
 
 
         def _dock():
