@@ -387,11 +387,14 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     self.remaining_waypoints = self.remaining_waypoints[1:]
                     self.state = EcobotState.MOVING
 
-                    nav_completed = self.api.navigation_completed()
+                    nav_completed = False
+                    time.sleep(1.0)
                     while (nav_completed == False):
                         nav_completed = self.api.navigation_completed()
                         self.node.get_logger().info("Navigating to dock position")
                         time.sleep(1.0)
+                        if not self.api.online():
+                            nav_completed = False
                     break
                 else:
                     self.node.get_logger().info(
