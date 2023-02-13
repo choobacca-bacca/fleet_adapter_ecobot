@@ -400,6 +400,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     )
                 self.api.load_map(target_map)
                 self.api.localize((target_map + "_lift_inside"), (target_map), True)
+                time.sleep(25.0)
 
 
         def _dock():
