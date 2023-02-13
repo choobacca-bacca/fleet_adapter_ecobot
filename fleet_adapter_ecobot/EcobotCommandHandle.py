@@ -389,15 +389,19 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     self.state = EcobotState.MOVING
 
                     nav_completed = False
-                    if (retry):
+                    if not (retry):
+                        self.node.get_logger().info("Retrying to dock")
                         time.sleep(30.0)
                     else:
+                        self.node.get_logger().info("Navigating to dock with normal wait")
                         time.sleep(1.0)
                     while (nav_completed == False):
                         nav_completed = self.api.navigation_completed()
                         self.node.get_logger().info("Navigating to dock position")
                         time.sleep(1.0)
                         if not self.api.online():
+                            nav_completed = False
+                        elif (self.dist(self.position, [px, py, orient]) > 0.2):
                             nav_completed = False
                     break
                 else:
