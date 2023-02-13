@@ -400,7 +400,11 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     )
                 self.api.load_map(target_map)
                 self.api.localize((target_map + "_lift_inside"), (target_map), False)
-                time.sleep(25.0)
+                while self.api.is_localize() == None:
+                    time.sleep(1.0)
+                    self.node.get_logger().info(
+                        f"Waiting for robot {self.name} to localize at {self.robot_map_name}"
+                    )              
 
 
         def _dock():
