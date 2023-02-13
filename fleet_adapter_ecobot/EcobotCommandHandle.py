@@ -393,12 +393,12 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
 
         def _exit_lift():
             # To check if map switching is needed
-            target_map=dock_name.split("_")[0]
+            target_map= "TRL_"+ dock_name.split("_")[0]
             if target_map!=self.robot_map_name:
                 self.node.get_logger().info(
-                        f"Requesting robot {self.name} to enter/exit lift"
+                        f"Requesting robot {self.name} to enter/exit lift and change maps from {self.robot_map_name} to {target_map}"
                     )
-                self.api.load_map(("TRL_"+ target_map))
+                self.api.load_map(target_map)
                 self.api.localize((target_map + "_lift_inside"), ("TRL_"+ target_map), True)
 
 
