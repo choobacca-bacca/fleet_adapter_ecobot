@@ -397,11 +397,12 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                         time.sleep(1.0)
                     while (nav_completed == False):
                         nav_completed = self.api.navigation_completed()
-                        self.node.get_logger().info("Navigating to dock position")
+                        dist_to_goal = self.dist(self.position, [px, py, orient])
+                        self.node.get_logger().info(f"Navigating to dock position, distance of {dist_to_goal}")
                         time.sleep(1.0)
                         if not self.api.online():
                             nav_completed = False
-                        elif (self.dist(self.position, [px, py, orient]) > 0.2):
+                        elif (dist_to_goal > 0.5):
                             nav_completed = False
                     break
                 else:
