@@ -389,7 +389,7 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     self.state = EcobotState.MOVING
 
                     nav_completed = False
-                    if not (retry):
+                    if (retry):
                         self.node.get_logger().info("Retrying to dock")
                         time.sleep(30.0)
                     else:
