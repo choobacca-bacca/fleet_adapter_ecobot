@@ -397,12 +397,12 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                         time.sleep(1.0)
                     while (nav_completed == False):
                         nav_completed = self.api.navigation_completed()
-                        dist_to_goal = self.dist(self.position, [px, py, orient])
-                        self.node.get_logger().info(f"Navigating to dock position, distance of {dist_to_goal}")
+                        dist_to_goal = self.dist(self.position, dock_loc)
+                        self.node.get_logger().info(f"Navigating to dock position, current pose {self.position}, destination pose {dock_loc} distance of {dist_to_goal}")
                         time.sleep(1.0)
                         if not self.api.online():
                             nav_completed = False
-                        elif (dist_to_goal > 0.5):
+                        elif (dist_to_goal > 0.2):
                             nav_completed = False
                     break
                 else:
@@ -554,6 +554,12 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     self.node.get_logger().info(
                         f"Requesting robot {self.name} to clean {description}")
                     if self.api.start_task(description["clean_task_name"], self.robot_map_name):
+                        self.check_task_completion = self.api.task_completed # check api func
+                        break
+                    elif (attempts == 1):
+                        self.node.get_logger().info(
+                        f"Requesting robot {self.name} to clean execute_task_{description}")
+                        self.api.start_task("execute_task_" + description["clean_task_name"], self.robot_map_name)
                         self.check_task_completion = self.api.task_completed # check api func
                         break
                     if (attempts > 3):
