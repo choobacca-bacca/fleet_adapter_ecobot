@@ -389,12 +389,6 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                     self.state = EcobotState.MOVING
 
                     nav_completed = False
-                    if (retry):
-                        self.node.get_logger().info("Retrying to dock")
-                        time.sleep(30.0)
-                    else:
-                        self.node.get_logger().info("Navigating to dock with normal wait")
-                        time.sleep(1.0)
                     while (nav_completed == False):
                         nav_completed = self.api.navigation_completed()
                         dist_to_goal = self.dist(self.position, dock_loc)
@@ -403,15 +397,11 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                         if not self.api.online():
                             nav_completed = False
                             self.node.get_logger().info("Robot is offline and cannot dock")
-                        elif (dist_to_goal > 0.2):
-                            nav_completed = False
-                            self.node.get_logger().info("Robot is not near dock pose")
                     break
                 else:
                     self.node.get_logger().info(
                         f"Robot {self.name} failed to navigate to"
                         "grid coordinates. Retrying...")
-                    retry = True
 
         def _exit_lift():
             # To check if map switching is needed
