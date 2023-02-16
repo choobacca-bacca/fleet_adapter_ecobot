@@ -397,6 +397,9 @@ class EcobotCommandHandle(adpt.RobotCommandHandle):
                         if not self.api.online():
                             nav_completed = False
                             self.node.get_logger().info("Robot is offline and cannot dock")
+                        if dist_to_goal < 0.5:
+                            nav_completed = False
+                            self.node.get_logger().info("Robot is not near goal and cannot dock")
                     break
                 else:
                     self.node.get_logger().info(
