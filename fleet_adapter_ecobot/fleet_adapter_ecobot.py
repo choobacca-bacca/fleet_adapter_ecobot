@@ -22,6 +22,8 @@ import faulthandler
 import rclpy
 import rclpy.node
 from rclpy.parameter import Parameter
+from std_msgs.msg import Bool as BoolMsg
+from rclpy.qos import qos_profile_system_default
 
 import rmf_adapter as adpt
 import rmf_adapter.vehicletraits as traits
@@ -147,7 +149,31 @@ def initialize_fleet(config_yaml, nav_graph_path, node, server_uri, args):
                 f"Fleet [{fleet_name}] is configured"
                 f" to perform action of category [{cat}]")
             fleet_handle.add_performable_action(cat, _consider)
+    
+    #Fire alarm subscriber, this will listen on the topic and stop the robot completely
+    class FireAlarmSubscriber(node):
+        def __init__(self):
+            super().__init__('minimal_subscriber')
+            self.subscription = self.create_subscription(
+                BoolMsg,
+                'fire_alarm_trigger',
+                self.listener_callback,
+                10)
+            self.subscription  # prevent unused variable warning
+            self.triggered = False
 
+        def listener_callback(self, msg):
+            if (msg.data and not self.triggered):
+                self.get_logger().info('The fire alarm is triggered')
+                self.triggered = True
+                EcobotAPI.stop()
+            elif (msg.data and self.triggered):
+                self.get_logger().info('The fire alarm is triggered')
+            elif (not msg.data and self.triggered):
+                self.triggered = False
+
+
+    firealarmsubscriber = FireAlarmSubscriber()
     # Initialize robots for this fleet
     missing_robots = config_yaml['robots']
 
@@ -277,6 +303,11 @@ def initialize_fleet(config_yaml, nav_graph_path, node, server_uri, args):
 
 
 #------------------------------------------------------------------------------
+# Fire Alarm Subscriber
+#------------------------------------------------------------------------------
+
+
+#------------------------------------------------------------------------------
 # Main
 #------------------------------------------------------------------------------
 def main(argv=sys.argv):
@@ -331,6 +362,7 @@ def main(argv=sys.argv):
     # Create executor for the command handle node
     rclpy_executor = rclpy.executors.SingleThreadedExecutor()
     rclpy_executor.add_node(node)
+    
 
     # Start the fleet adapter
     rclpy_executor.spin()
